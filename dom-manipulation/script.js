@@ -42,7 +42,7 @@ async function syncQuotes() {
 
         if (!response.ok) throw new Error("Failed to sync with server.");
         
-        notifyUser("Quotes successfully synced with the server.");
+        notifyUser("Quotes synced with server!");
     } catch (error) {
         console.error("Error syncing quotes with server:", error);
     }
@@ -182,6 +182,7 @@ function showRandomQuote() {
     quoteDisplay.innerHTML = `<p>"${randomQuote.text}"</p><small>Category: <strong>${randomQuote.category}</strong></small>`;
 }
 
+/** 🛠 Initialize the app **/
 createAddQuoteForm();
 document.getElementById("newQuote").addEventListener("click", showRandomQuote);
 
@@ -191,6 +192,8 @@ if (syncButton) {
     syncButton.addEventListener("click", syncQuotes);
 }
 
+// Fetch server quotes every 10 sec
 setInterval(fetchQuotesFromServer, 10000);
 
+// Sync before the user leaves the page
 window.addEventListener("beforeunload", syncQuotes);
