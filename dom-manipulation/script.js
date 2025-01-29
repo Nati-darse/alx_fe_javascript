@@ -11,6 +11,7 @@ let savedQuotes = JSON.parse(localStorage.getItem("quotes")) || [
 // Retrieve last selected category
 let lastSelectedCategory = localStorage.getItem("lastSelectedCategory") || "all";
 
+/** 🛠 Function to fetch quotes from the server **/
 async function fetchQuotesFromServer() {
     try {
         const response = await fetch(API_URL);
@@ -30,6 +31,24 @@ async function fetchQuotesFromServer() {
     }
 }
 
+/** 🛠 Function to manually sync quotes with the server **/
+async function syncQuotes() {
+    try {
+        const response = await fetch(API_URL, {
+            method: "POST",
+            body: JSON.stringify(savedQuotes),
+            headers: { "Content-Type": "application/json" }
+        });
+
+        if (!response.ok) throw new Error("Failed to sync with server.");
+        
+        notifyUser("Quotes successfully synced with the server.");
+    } catch (error) {
+        console.error("Error syncing quotes with server:", error);
+    }
+}
+
+/** 🛠 Function to merge server and local quotes **/
 function mergeQuotes(serverQuotes) {
     let updatedQuotes = [...savedQuotes];
 
@@ -41,26 +60,13 @@ function mergeQuotes(serverQuotes) {
         }
     });
 
+    // Save merged quotes to localStorage
     savedQuotes = updatedQuotes;
     localStorage.setItem("quotes", JSON.stringify(savedQuotes));
     filterQuotes();
 }
 
-async function syncWithServer() {
-    try {
-        const response = await fetch(API_URL, {
-            method: "POST",
-            body: JSON.stringify(savedQuotes),
-            headers: { "Content-Type": "application/json" }
-        });
-
-        if (!response.ok) throw new Error("Failed to sync with server.");
-        notifyUser("Quotes successfully synced with server.");
-    } catch (error) {
-        console.error("Error syncing with server:", error);
-    }
-}
-
+/** 🛠 Function to handle conflicts (server vs local) **/
 function resolveConflicts(serverQuotes) {
     const conflicts = serverQuotes.filter(serverQuote =>
         savedQuotes.some(localQuote => localQuote.text === serverQuote.text && localQuote.category !== serverQuote.category)
@@ -72,6 +78,7 @@ function resolveConflicts(serverQuotes) {
             console.warn("Conflict:", conflict);
         });
 
+        // Prefer server version (or modify to let user decide)
         conflicts.forEach(conflict => {
             savedQuotes = savedQuotes.map(quote =>
                 quote.text === conflict.text ? conflict : quote
@@ -83,10 +90,12 @@ function resolveConflicts(serverQuotes) {
     }
 }
 
+/** 🛠 Function to notify user of updates **/
 function notifyUser(message) {
     alert(message);
 }
 
+/** 🛠 Function to display quotes based on selected category **/
 function filterQuotes() {
     const selectedCategory = document.getElementById("categoryFilter").value;
     localStorage.setItem("lastSelectedCategory", selectedCategory);
@@ -111,6 +120,7 @@ function filterQuotes() {
     }
 }
 
+/** 🛠 Function to add a new quote **/
 function addQuote() {
     const newQuoteText = document.getElementById("newQuoteText").value.trim();
     const newQuoteCategory = document.getElementById("newQuoteCategory").value.trim();
@@ -137,6 +147,7 @@ function addQuote() {
     }
 }
 
+/** 🛠 Function to dynamically create the form for adding new quotes **/
 function createAddQuoteForm() {
     const formContainer = document.createElement("div");
     formContainer.style.marginTop = "20px";
@@ -163,6 +174,7 @@ function createAddQuoteForm() {
     document.body.appendChild(formContainer);
 }
 
+/** 🛠 Function to display a random quote **/
 function showRandomQuote() {
     const randomIndex = Math.floor(Math.random() * savedQuotes.length);
     const randomQuote = savedQuotes[randomIndex];
@@ -173,5 +185,12 @@ function showRandomQuote() {
 createAddQuoteForm();
 document.getElementById("newQuote").addEventListener("click", showRandomQuote);
 
-// Sync every 10 seconds
+// Attach sync function to button (if exists)
+const syncButton = document.getElementById("syncQuotes");
+if (syncButton) {
+    syncButton.addEventListener("click", syncQuotes);
+}
+
 setInterval(fetchQuotesFromServer, 10000);
+
+window.addEventListener("beforeunload", syncQuotes);
