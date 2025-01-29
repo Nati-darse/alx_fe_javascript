@@ -8,9 +8,10 @@ let savedQuotes = JSON.parse(localStorage.getItem("quotes")) || [
     { text: "Happiness is not something ready made. It comes from your own actions.", category: "Happiness" },
 ];
 
+// Retrieve last selected category
 let lastSelectedCategory = localStorage.getItem("lastSelectedCategory") || "all";
 
-async function fetchServerQuotes() {
+async function fetchQuotesFromServer() {
     try {
         const response = await fetch(API_URL);
         if (!response.ok) throw new Error("Failed to fetch quotes from server.");
@@ -22,6 +23,7 @@ async function fetchServerQuotes() {
             category: "General"
         }));
 
+        // Merge and resolve conflicts
         mergeQuotes(formattedQuotes);
     } catch (error) {
         console.error("Error fetching server quotes:", error);
@@ -171,4 +173,5 @@ function showRandomQuote() {
 createAddQuoteForm();
 document.getElementById("newQuote").addEventListener("click", showRandomQuote);
 
-setInterval(fetchServerQuotes, 10000);
+// Sync every 10 seconds
+setInterval(fetchQuotesFromServer, 10000);
