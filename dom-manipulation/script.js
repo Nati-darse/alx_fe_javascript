@@ -11,6 +11,32 @@ let savedQuotes = JSON.parse(localStorage.getItem("quotes")) || [
 // Retrieve last selected category
 let lastSelectedCategory = localStorage.getItem("lastSelectedCategory") || "all";
 
+/** 🛠 Function to populate categories in the dropdown **/
+function populateCategories() {
+    const categoryFilter = document.getElementById("categoryFilter");
+    const uniqueCategories = new Set(savedQuotes.map(quote => quote.category));
+
+    // Clear existing options
+    categoryFilter.innerHTML = "";
+
+    // Add "All" option
+    const allOption = document.createElement("option");
+    allOption.value = "all";
+    allOption.textContent = "All";
+    categoryFilter.appendChild(allOption);
+
+    // Add unique categories to the dropdown
+    uniqueCategories.forEach(category => {
+        const option = document.createElement("option");
+        option.value = category;
+        option.textContent = category;
+        categoryFilter.appendChild(option);
+    });
+
+    // Set the last selected category
+    categoryFilter.value = lastSelectedCategory;
+}
+
 /** 🛠 Function to fetch quotes from the server **/
 async function fetchQuotesFromServer() {
     try {
@@ -68,6 +94,7 @@ function mergeQuotes(serverQuotes) {
 /** 🛠 Save quotes to local storage **/
 function saveQuotes() {
     localStorage.setItem("quotes", JSON.stringify(savedQuotes));
+    populateCategories(); // Update categories in the dropdown
     filterQuotes();
 }
 
@@ -133,14 +160,6 @@ function addQuote() {
         const newQuote = { text: newQuoteText, category: newQuoteCategory };
         savedQuotes.push(newQuote);
         saveQuotes(); // Save to local storage
-
-        const categoryFilter = document.getElementById("categoryFilter");
-        if (![...categoryFilter.options].some((option) => option.value === newQuoteCategory)) {
-            const newOption = document.createElement("option");
-            newOption.value = newQuoteCategory;
-            newOption.textContent = newQuoteCategory;
-            categoryFilter.appendChild(newOption);
-        }
 
         document.getElementById("newQuoteText").value = "";
         document.getElementById("newQuoteCategory").value = "";
@@ -213,6 +232,7 @@ function importFromJsonFile(event) {
 
 /** 🛠 Initialize the app **/
 createAddQuoteForm();
+populateCategories(); // Populate categories on app init
 document.getElementById("newQuote").addEventListener("click", showRandomQuote);
 
 // Attach sync function to button (if exists)
